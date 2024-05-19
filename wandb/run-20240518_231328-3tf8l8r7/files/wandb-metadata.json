@@ -1,0 +1,43 @@
+{
+    "os": "macOS-14.4.1-arm64-arm-64bit",
+    "python": "3.9.6",
+    "heartbeatAt": "2024-05-19T06:13:29.120499",
+    "startedAt": "2024-05-19T06:13:28.305636",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--batch_size=32",
+        "--mini_batch_size=32",
+        "--exp_name=test",
+        "--steps=1",
+        "--log_with=wandb"
+    ],
+    "state": "running",
+    "program": "/Users/matthewhayes/Documents/CS234/Project/cs234-project/ppo.py",
+    "codePathLocal": "ppo.py",
+    "codePath": "ppo.py",
+    "git": {
+        "remote": "git@github.com:mattjhayes3/cs234-project.git",
+        "commit": "49c0c0ece9993e55de96108e9fd6e256694c9111"
+    },
+    "email": "mattjhayes3@gmail.com",
+    "root": "/Users/matthewhayes/Documents/CS234/Project/cs234-project",
+    "host": "matthewhayes-mac.roam.internal",
+    "username": "matthewhayes",
+    "executable": "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "cpu_count": 12,
+    "cpu_count_logical": 12,
+    "disk": {
+        "/": {
+            "total": 460.4317207336426,
+            "used": 9.536808013916016
+        }
+    },
+    "gpuapple": {
+        "type": "arm",
+        "vendor": "Apple"
+    },
+    "memory": {
+        "total": 32.0
+    }
+}
