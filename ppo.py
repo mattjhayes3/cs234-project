@@ -212,8 +212,9 @@ if not ppo_config.eval_model:
         stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
         ppo_trainer.log_stats(stats, batch, rewards, columns_to_log=["query", "response", "ref_response", "ref_rewards"])
 
-    model.save_pretrained(f"gpt2-imdb-pos-{full_name}", push_to_hub=True)
-    tokenizer.save_pretrained(f"gpt2-imdb-pos-{full_name}", push_to_hub=True)
+    if not ppo_config.dry_run:
+        model.save_pretrained(f"gpt2-imdb-pos-{full_name}", push_to_hub=True)
+        tokenizer.save_pretrained(f"gpt2-imdb-pos-{full_name}", push_to_hub=True)
     print("Training done!  Start eval")
 print("eval batch size", ppo_trainer.config.batch_size)
 dataset = build_dataset(ppo_trainer.config, ppo_config.query_dataset, "test[:10%]")#[:512]
