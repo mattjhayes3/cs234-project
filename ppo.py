@@ -188,7 +188,7 @@ generation_kwargs = {
 
 if not ppo_config.eval_model:
     for _epoch, batch in tqdm(enumerate(ppo_trainer.dataloader), total=len(ppo_trainer.dataloader)):
-        if ppo_config.dry_run and _epoch > 1:
+        if ppo_config.dry_run and _epoch > 0:
             break
         query_tensors = batch["input_ids"]
 
