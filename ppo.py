@@ -58,7 +58,7 @@ else:
 
 # We then define the arguments to pass to the sentiment analysis pipeline.
 # We set `return_all_scores` to True to get the sentiment score for each token.
-sent_kwargs = {"return_all_scores": True, "function_to_apply": "softmax", "batch_size": 16}
+sent_kwargs = {"return_all_scores": True, "function_to_apply": "softmax", "batch_size": 32}
 
 trl_model_class = AutoModelForCausalLMWithValueHead if not args.use_seq2seq else AutoModelForSeq2SeqLMWithValueHead
 
@@ -111,6 +111,7 @@ set_seed(ppo_config.seed)
 
 # Now let's build the model, the reference model, and the tokenizer.
 if not args.use_peft:
+    print(f"load ref model", ppo_config.model_name)
     ref_model = trl_model_class.from_pretrained(ppo_config.model_name, trust_remote_code=args.trust_remote_code)
     device_map = None
     peft_config = None
@@ -125,21 +126,14 @@ else:
     # Copy the model to each device
     device_map = {"": Accelerator().local_process_index}
 
-if ppo_config.eval_model:
-    model = trl_model_class.from_pretrained(
-        ppo_config.eval_model,
-        trust_remote_code=args.trust_remote_code,
-        device_map=device_map,
-        peft_config=peft_config,
-    )
-else: 
-    model = trl_model_class.from_pretrained(
-        ppo_config.model_name,
-        trust_remote_code=args.trust_remote_code,
-        device_map=device_map,
-        peft_config=peft_config,
-    )
-
+train_model_name = ppo_config.eval_model if ppo_config.eval_model else ppo_config.model_name
+print(f"load train model", train_model_name)
+model = trl_model_class.from_pretrained(
+    train_model_name,
+    trust_remote_code=args.trust_remote_code,
+    device_map=device_map,
+    peft_config=peft_config,
+)
 
 tokenizer = AutoTokenizer.from_pretrained(ppo_config.model_name)
 
@@ -189,11 +183,13 @@ generation_kwargs = {
     "top_p": 1.0,
     "do_sample": True,
     "pad_token_id": tokenizer.eos_token_id,
-    "max_new_tokens": 32,
+    "max_new_tokens": ppo_config.max_new_tokens,
 }
 
 if not ppo_config.eval_model:
     for _epoch, batch in tqdm(enumerate(ppo_trainer.dataloader), total=len(ppo_trainer.dataloader)):
+        if ppo_config.dry_run and _epoch > 1:
+            break
         query_tensors = batch["input_ids"]
 
         # Get response from gpt2
@@ -225,6 +221,8 @@ dataloader = ppo_trainer.prepare_dataloader(dataset, collator)
 print("test len", len(dataloader))
 test_stats = []
 for _epoch, batch in tqdm(enumerate(dataloader), total=len(dataloader)):
+    if ppo_config.dry_run and _epoch > 0:
+        break
     query_tensors = batch["input_ids"]
 
     # Get response from gpt2
