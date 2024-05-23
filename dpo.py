@@ -154,7 +154,7 @@ if __name__ == "__main__":
         # row["rejected"] = tokenizer.apply_chat_template(row["rejected"], tokenize=False)
         return row
 
-    ds = ds.train_test_split(test_size=0.075, shuffle=True, seed=42)
+    ds = ds.train_test_split(test_size=0.05, shuffle=True, seed=42)
     # print(len(ds), type(ds))
     # ds.map(
     #     process,
