@@ -1,0 +1,2 @@
+*.arrow filter=lfs diff=lfs merge=lfs -text
+pref_pairs_16_token_tokenized/*.arrow filter=lfs diff=lfs merge=lfs -text
