@@ -65,7 +65,7 @@ if TRL_USE_RICH:
     from rich.logging import RichHandler
 
 import torch
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from trl import (
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     ################
     # Dataset
     ################
-    ds = load_dataset(args.dataset_name, split='train')
+    ds = load_from_disk(args.dataset_name)
     if args.sanity_check:
         for key in ds:
             ds[key] = ds[key].select(range(50))
@@ -154,6 +154,7 @@ if __name__ == "__main__":
         # row["rejected"] = tokenizer.apply_chat_template(row["rejected"], tokenize=False)
         return row
 
+    print('ds len', len(ds))
     ds = ds.train_test_split(test_size=0.05, shuffle=True, seed=42)
     # print(len(ds), type(ds))
     # ds.map(
