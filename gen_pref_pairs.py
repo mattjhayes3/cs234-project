@@ -1,6 +1,11 @@
 from itertools import combinations 
 import pandas as pd
 
+DISTINCT_GENERATIONS = 6
+OUTFILE = 'pref_pairs_16_token_3_distinct_pairs.csv'
+TOTAL = 24895
+DISTINCT_PAIRS = True
+
 # dfs = [pd.read_csv(f'sft_generations_v2_{i}.csv', index_col=0) for i in range(5)]
 # df = pd.concat(dfs, axis=0).reset_index(drop=True)
 df = pd.read_csv('sft_generations_16_token.csv')
@@ -18,13 +23,21 @@ for index, row in df.iterrows():
             continue
         gen_sents.append(gen_sent)
         generations.add(gen_sent[0])
-        if len(gen_sents) == 4:
+        if len(gen_sents) == DISTINCT_GENERATIONS:
             break
-    assert len(gen_sents) == 4, index
+    if not len(gen_sents) == DISTINCT_GENERATIONS:
+        print("skipping index", index)
+        continue
 
     # gen_sents = [(row[f'generation_{i}'], row[f'sentiment_{i}']) for i in range(4)]
 
-    for a, b in combinations(gen_sents, 2):
+    generator = combinations(gen_sents, 2) 
+    if DISTINCT_PAIRS:
+        assert DISTINCT_GENERATIONS % 2 == 0
+        generator = []
+        for i in range(DISTINCT_GENERATIONS//2):
+            generator.append((gen_sents[i*2], gen_sents[i*2 + 1]))
+    for a, b in generator:
         if (a[0] == b[0]):
             dupes +=1
             continue
@@ -36,6 +49,12 @@ for index, row in df.iterrows():
             'diff': winner[1] - loser[1],
             'source_index': index,
         })
+        if len(pref_pairs) == TOTAL:
+            print(f"Stopping at index {index}")
+            break
+    if len(pref_pairs) == TOTAL:
+        print(f"Stopping at index {index}")
+        break
 result = pd.DataFrame(pref_pairs)
-result.to_csv('pref_pairs_16_token.csv')
+result.to_csv(OUTFILE)
 print("Generated", len(result), "dropped", dupes, "exact dupes")

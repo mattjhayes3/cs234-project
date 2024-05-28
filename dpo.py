@@ -65,8 +65,9 @@ if TRL_USE_RICH:
     from rich.logging import RichHandler
 
 import torch
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, DatasetDict
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import subprocess
 
 from trl import (
     DPOConfig,
@@ -144,7 +145,7 @@ if __name__ == "__main__":
     ################
     # Dataset
     ################
-    ds = load_from_disk(args.dataset_name)
+    ds = load_from_disk(args.dataset_name) if not args.tokenize else load_dataset(args.dataset_name)
     if args.sanity_check:
         for key in ds:
             ds[key] = ds[key].select(range(50))
@@ -154,16 +155,19 @@ if __name__ == "__main__":
         # row["rejected"] = tokenizer.apply_chat_template(row["rejected"], tokenize=False)
         return row
 
-    print('ds len', len(ds))
-    ds = ds.train_test_split(test_size=0.05, shuffle=True, seed=42)
-    # print(len(ds), type(ds))
-    # ds.map(
-    #     process,
-    #     num_proc=multiprocessing.cpu_count(),
-    #     load_from_cache_file=False,
-    # )
-    train_dataset = ds[args.dataset_train_split]
-    eval_dataset = ds[args.dataset_test_split]
+    if not args.tokenize:
+        if isinstance(ds, DatasetDict):
+            ds = ds['train']
+        print('ds len', len(ds))
+        ds = ds.train_test_split(test_size=0.05, shuffle=True, seed=42)
+        # print(len(ds), type(ds))
+        # ds.map(
+        #     process,
+        #     num_proc=multiprocessing.cpu_count(),
+        #     load_from_cache_file=False,
+        # )
+        train_dataset = ds[args.dataset_train_split]
+        eval_dataset = ds[args.dataset_test_split]
 
     ################
     # Training
@@ -173,14 +177,23 @@ if __name__ == "__main__":
             model,
             model_ref,
             args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
+            train_dataset=ds if args.tokenize else train_dataset,
+            eval_dataset=None if args.tokenize else eval_dataset,
             tokenizer=tokenizer,
             peft_config=get_peft_config(model_config),
             callbacks=[RichProgressCallback] if TRL_USE_RICH else None,
+            tokenize=args.tokenize,
         )
 
-    trainer.train()
-
-    with save_context:
-        trainer.save_model(training_args.output_dir)
+    if args.tokenize:
+        trainer.train_dataset.save_to_disk(f"{args.dataset_name}_tokenized", max_shard_size='90MB')
+    else:
+        trainer.train()
+        with save_context:
+            trainer.save_model(training_args.output_dir)
+        def print_and_run(cmd):
+            print(cmd)
+            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        print_and_run(f"python ppo.py --exp_name=eval --eval_model=./{training_args.output_dir}/checkpoint-3327")
+        print_and_run(f"python ppo.py --exp_name=eval --eval_model=./{training_args.output_dir}/checkpoint-2218")
+        print_and_run(f"python ppo.py --exp_name=eval --eval_model=./{training_args.output_dir}/checkpoint-1109")

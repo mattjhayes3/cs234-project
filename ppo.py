@@ -29,7 +29,7 @@ from trl import AutoModelForCausalLMWithValueHead, AutoModelForSeq2SeqLMWithValu
 from trl.core import LengthSampler
 from trl.import_utils import is_npu_available, is_xpu_available
 import pandas as pd
-
+import subprocess
 
 
 tqdm.pandas()
@@ -143,6 +143,9 @@ tokenizer.pad_token_id = tokenizer.eos_token_id
 # We then build the PPOTrainer, passing the model, the reference model, the tokenizer
 ppo_trainer = PPOTrainer(ppo_config, model, ref_model, tokenizer, dataset=dataset, data_collator=collator)
 
+score_shift = 0 if not ppo_config.normalize_scores else 0.5
+score_scale = 1 if not ppo_config.normalize_scores else 2
+
 # We then build the sentiment analysis pipeline, passing the model name and the
 # sentiment analysis pipeline arguments. Let's also make sure to set the device
 # to the same device as the PPOTrainer.
@@ -202,10 +205,10 @@ if not ppo_config.eval_model:
         # Compute sentiment score
         texts = [q + r for q, r in zip(batch["query"], batch["response"])]
         pipe_outputs = sentiment_pipe(texts, **sent_kwargs)
-        rewards = [torch.tensor(output[1]["score"]) for output in pipe_outputs]
+        rewards = [(torch.tensor(output[1]["score"]) - score_shift) * score_scale for output in pipe_outputs]
         ref_texts = [q + r for q, r in zip(batch["query"], batch["ref_response"])]
         ref_pipe_outputs = sentiment_pipe(ref_texts, **sent_kwargs)
-        ref_rewards = [torch.tensor(output[1]["score"]) for output in ref_pipe_outputs]
+        ref_rewards = [(torch.tensor(output[1]["score"]) - score_shift) * score_scale for output in ref_pipe_outputs]
         batch["ref_rewards"] = ref_rewards
 
         # Run PPO step
@@ -261,4 +264,5 @@ print("median test reward", test_stats.rewards.median(), "from", test_stats.ref_
 print("mean KL", test_stats.kls.mean(), "+/-", test_stats.kls.sem(), "full", test_stats.full_kls.mean(), "+/-", test_stats.full_kls.sem())
 print("median KL", test_stats.kls.median(), "full", test_stats.full_kls.median())
 # print(test_stats)
+
 
