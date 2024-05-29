@@ -33,6 +33,17 @@ import pandas as pd
 
 tqdm.pandas()
 
+@dataclass
+class ScriptArguments:
+    use_seq2seq: bool = field(default=False, metadata={"help": "whether to use seq2seq"})
+    trust_remote_code: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
+    trust_remote_code: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
+
+    # LoraConfig
+    use_peft: bool = field(default=False, metadata={"help": "whether to use peft"})
+    lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
+    lora_r: Optional[int] = field(default=16, metadata={"help": "the lora r parameter"})
+
 
 def run(ppo_config, args, full_name):
     # We then define the arguments to pass to the sentiment analysis pipeline.
@@ -246,20 +257,9 @@ def run(ppo_config, args, full_name):
 # print(test_stats)
 
 def eval(model, notes):
-    run(PPOConfig(exp_name="eval", eval_model=model, full_name=f'{model}_{notes}'))
+    run(PPOConfig(exp_name="eval", eval_model=model), args=ScriptArguments(), full_name=f'{model}_{notes}'))
 
 if __name__ == "__main__":
-    @dataclass
-    class ScriptArguments:
-        use_seq2seq: bool = field(default=False, metadata={"help": "whether to use seq2seq"})
-        trust_remote_code: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
-        trust_remote_code: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
-
-        # LoraConfig
-        use_peft: bool = field(default=False, metadata={"help": "whether to use peft"})
-        lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
-        lora_r: Optional[int] = field(default=16, metadata={"help": "the lora r parameter"})
-
     parser = HfArgumentParser((ScriptArguments, PPOConfig))
     args, ppo_config = parser.parse_args_into_dataclasses()
     print("PPOConfig:", ppo_config)
