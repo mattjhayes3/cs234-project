@@ -257,7 +257,7 @@ def run(ppo_config, args, full_name):
 # print(test_stats)
 
 def eval(model, notes):
-    run(PPOConfig(exp_name="eval", eval_model=model), args=ScriptArguments(), full_name=f'{model}_{notes}'))
+    run(PPOConfig(exp_name="eval", eval_model=model), args=ScriptArguments(), full_name=f'{model}_{notes}')
 
 if __name__ == "__main__":
     parser = HfArgumentParser((ScriptArguments, PPOConfig))
