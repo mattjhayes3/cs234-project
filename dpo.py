@@ -52,6 +52,7 @@ import logging
 import multiprocessing
 import os
 from contextlib import nullcontext
+import ppo
 
 TRL_USE_RICH = os.environ.get("TRL_USE_RICH", False)
 
@@ -191,9 +192,11 @@ if __name__ == "__main__":
         trainer.train()
         with save_context:
             trainer.save_model(training_args.output_dir)
-        def print_and_run(cmd):
-            print(cmd)
-            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        print_and_run(f"python ppo.py --exp_name=eval --eval_model=./{training_args.output_dir}/checkpoint-3327")
-        print_and_run(f"python ppo.py --exp_name=eval --eval_model=./{training_args.output_dir}/checkpoint-2218")
-        print_and_run(f"python ppo.py --exp_name=eval --eval_model=./{training_args.output_dir}/checkpoint-1109")
+        steps = len(trainer.get_train_dataloader())
+        print(f"Evaling every {steps}")
+        results = []
+        for epoch in range(1, training_args.num_train_epochs+1):
+            r, r_sem, kl, kl_sem = ppo.eval(f"{training_args.output_dir}/checkpoint-{epoch*steps}", f"epoch {epoch}")
+            results.append([training_args.output_dir, training_args.beta, f"epoch {epoch}"], r, r_sem, kl, kl_sem)
+        for result in results:
+            print(",".join(result))
