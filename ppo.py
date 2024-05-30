@@ -29,7 +29,7 @@ from trl import AutoModelForCausalLMWithValueHead, AutoModelForSeq2SeqLMWithValu
 from trl.core import LengthSampler
 from trl.import_utils import is_npu_available, is_xpu_available
 import pandas as pd
-
+import os
 
 tqdm.pandas()
 
@@ -248,7 +248,9 @@ def run(ppo_config, args, full_name):
 
 
     test_stats = pd.concat(test_stats, axis=0).reset_index(drop=True)
-    test_stats.to_csv(f'./results/{full_name}.csv')
+    path = f'./results/{full_name}.csv'
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    test_stats.to_csv(path)
     print("mean test reward", test_stats.rewards.mean(), "+/-", test_stats.rewards.sem(), "from", test_stats.ref_rewards.mean(), "+/-", test_stats.ref_rewards.sem())
     print("median test reward", test_stats.rewards.median(), "from", test_stats.ref_rewards.median())
     print("mean KL", test_stats.kls.mean(), "+/-", test_stats.kls.sem(), "full", test_stats.full_kls.mean(), "+/-", test_stats.full_kls.sem())
@@ -264,7 +266,7 @@ if __name__ == "__main__":
     args, ppo_config = parser.parse_args_into_dataclasses()
     print("PPOConfig:", ppo_config)
     if ppo_config.eval_model:
-        full_name = ppo_config.eval_model.split('/')[1]
+        full_name = ppo_config.eval_model
     else:
         full_name = f"{ppo_config.exp_name}-{ppo_config.start_time}"
     run(ppo_config, args, full_name)
