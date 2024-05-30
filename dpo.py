@@ -66,7 +66,7 @@ if TRL_USE_RICH:
     from rich.logging import RichHandler
 
 import torch
-from datasets import load_dataset, load_from_disk, DatasetDict
+from datasets import load_dataset, load_from_disk, DatasetDict, Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import subprocess
 
@@ -146,7 +146,10 @@ if __name__ == "__main__":
     ################
     # Dataset
     ################
-    ds = load_from_disk(args.dataset_name) if not args.tokenize else load_dataset(args.dataset_name)
+    if args.dataset_name[-4:] == '.csv':
+        ds = Dataset.from_csv(args.dataset_name)
+    else:
+        ds = load_from_disk(args.dataset_name) if not args.tokenize else load_dataset(args.dataset_name)
     if args.sanity_check:
         for key in ds:
             ds[key] = ds[key].select(range(50))
@@ -187,7 +190,7 @@ if __name__ == "__main__":
         )
 
     if args.tokenize:
-        trainer.train_dataset.save_to_disk(f"{args.dataset_name}_tokenized", max_shard_size='90MB')
+        trainer.train_dataset.save_to_disk(f"{args.dataset_name.split('.csv')[0]}_tokenized", max_shard_size='90MB')
     else:
         trainer.train()
         with save_context:

@@ -2,9 +2,9 @@ from itertools import combinations
 import pandas as pd
 
 DISTINCT_GENERATIONS = 6
-OUTFILE = 'pref_pairs_16_token_3_distinct_pairs.csv'
+OUTFILE = 'pref_pairs_16_token_6_choose_2_div_6.csv'
 TOTAL = 24895
-DISTINCT_PAIRS = True
+DISTINCT_PAIRS = False
 
 # dfs = [pd.read_csv(f'sft_generations_v2_{i}.csv', index_col=0) for i in range(5)]
 # df = pd.concat(dfs, axis=0).reset_index(drop=True)

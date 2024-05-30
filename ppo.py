@@ -37,13 +37,13 @@ tqdm.pandas()
 class ScriptArguments:
     use_seq2seq: bool = field(default=False, metadata={"help": "whether to use seq2seq"})
     trust_remote_code: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
-    trust_remote_code: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
 
     # LoraConfig
     use_peft: bool = field(default=False, metadata={"help": "whether to use peft"})
     lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
     lora_r: Optional[int] = field(default=16, metadata={"help": "the lora r parameter"})
 
+    sdg: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
 
 def run(ppo_config, args, full_name):
     # We then define the arguments to pass to the sentiment analysis pipeline.
@@ -131,7 +131,13 @@ def run(ppo_config, args, full_name):
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
     # We then build the PPOTrainer, passing the model, the reference model, the tokenizer
-    ppo_trainer = PPOTrainer(ppo_config, model, ref_model, tokenizer, dataset=dataset, data_collator=collator)
+    ppo_trainer = PPOTrainer(ppo_config, 
+                             model, 
+                             ref_model, 
+                             tokenizer, 
+                             dataset=dataset, 
+                             data_collator=collator,
+                             optimizer=torch.optim.SGD(lr=ppo_config.learning_rate) if args.sgd else None)
 
     score_shift = 0 if not ppo_config.normalize_scores else 0.5
     score_scale = 1 if not ppo_config.normalize_scores else 2
@@ -256,10 +262,9 @@ def run(ppo_config, args, full_name):
     print("mean KL", test_stats.kls.mean(), "+/-", test_stats.kls.sem(), "full", test_stats.full_kls.mean(), "+/-", test_stats.full_kls.sem())
     print("median KL", test_stats.kls.median(), "full", test_stats.full_kls.median())
     return test_stats.rewards.mean(), test_stats.rewards.sem(), test_stats.full_kls.mean(), test_stats.full_kls.sem() 
-# print(test_stats)
 
 def eval(model, notes):
-    run(PPOConfig(exp_name="eval", eval_model=model), args=ScriptArguments(), full_name=f'{model}_{notes}')
+    return run(PPOConfig(exp_name="eval", eval_model=model), args=ScriptArguments(), full_name=f'{model}_{notes}')
 
 if __name__ == "__main__":
     parser = HfArgumentParser((ScriptArguments, PPOConfig))
