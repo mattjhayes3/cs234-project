@@ -43,7 +43,7 @@ class ScriptArguments:
     lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
     lora_r: Optional[int] = field(default=16, metadata={"help": "the lora r parameter"})
 
-    sdg: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
+    sgd: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
 
 def run(ppo_config, args, full_name):
     # We then define the arguments to pass to the sentiment analysis pipeline.
