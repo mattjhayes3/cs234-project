@@ -136,7 +136,8 @@ def run(ppo_config, args, full_name):
                              tokenizer, 
                              dataset=dataset, 
                              data_collator=collator,
-                             optimizer=torch.optim.SGD(lr=ppo_config.learning_rate) if args.sgd else None)
+                             optimizer=torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=ppo_config.learning_rate) if args.sgd else None
+                             )
 
     score_shift = 0 if not ppo_config.normalize_scores else 0.5
     score_scale = 1 if not ppo_config.normalize_scores else 2
