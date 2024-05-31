@@ -205,6 +205,6 @@ if __name__ == "__main__":
             checkpoint = f"{training_args.output_dir}/checkpoint-{epoch*steps}"
             print(f"Loading from {checkpoint}")
             r, r_sem, kl, kl_sem = ppo.eval(checkpoint, f"epoch {epoch}")
-            results.append([training_args.output_dir, training_args.beta, f"epoch {epoch}"], r, r_sem, kl, kl_sem)
+            results.append([training_args.output_dir, training_args.beta, f"epoch {epoch}", r, r_sem, kl, kl_sem])
         for result in results:
             print(",".join(result))
