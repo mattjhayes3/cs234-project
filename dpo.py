@@ -196,10 +196,15 @@ if __name__ == "__main__":
         with save_context:
             trainer.save_model(training_args.output_dir)
         steps = len(trainer.get_train_dataloader())
-        print(f"Evaling every {steps}")
+        last_eval_epoch = int(training_args.num_train_epochs)
+        first_eval_epoch = int(training_args.num_train_epochs - training_args.save_total_limit)
+        eval_epochs = list(range(last_eval_epoch, first_eval_epoch, -1))
+        print(f"Evaling epochs {eval_epochs}")
         results = []
-        for epoch in range(1, int(training_args.num_train_epochs)+1):
-            r, r_sem, kl, kl_sem = ppo.eval(f"{training_args.output_dir}/checkpoint-{epoch*steps}", f"epoch {epoch}")
+        for epoch in eval_epochs:
+            checkpoint = f"{training_args.output_dir}/checkpoint-{epoch*steps}"
+            print(f"Loading from {checkpoint}")
+            r, r_sem, kl, kl_sem = ppo.eval(checkpoint, f"epoch {epoch}")
             results.append([training_args.output_dir, training_args.beta, f"epoch {epoch}"], r, r_sem, kl, kl_sem)
         for result in results:
             print(",".join(result))
