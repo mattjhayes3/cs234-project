@@ -1,7 +1,7 @@
 import pandas as pd
 import random
 
-threshold = 0.2
+threshold = -0.3
 
 random.seed(42)
 
@@ -16,7 +16,8 @@ print(df.columns)
 # rejected = df.loc[flips, 'rejected']
 count = 0
 for index, row in df.iterrows():
-    if random.random() > row['diff'] + threshold:
+    if random.random() < row['diff'] + threshold:
+    # if random.random() < threshold:
         count += 1
         chosen = row['chosen']
         rejected = row['rejected']
