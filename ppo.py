@@ -42,7 +42,6 @@ class ScriptArguments:
     use_peft: bool = field(default=False, metadata={"help": "whether to use peft"})
     lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
     lora_r: Optional[int] = field(default=16, metadata={"help": "the lora r parameter"})
-    sgd: bool = field(default=False, metadata={"help": "Enable `trust_remote_code`"})
 
 def run(ppo_config, args, full_name):
     # We then define the arguments to pass to the sentiment analysis pipeline.
@@ -88,7 +87,7 @@ def run(ppo_config, args, full_name):
 
 
     # We retrieve the dataloader by calling the `build_dataset` function.
-    dataset = build_dataset(ppo_config, ppo_config.query_dataset, "train")
+    dataset = build_dataset(ppo_config, ppo_config.query_dataset, "train" if not ppo_config.eval_model else "train[:1%]")
 
 
     def collator(data):
@@ -135,9 +134,7 @@ def run(ppo_config, args, full_name):
                              ref_model, 
                              tokenizer, 
                              dataset=dataset, 
-                             data_collator=collator,
-                             optimizer=torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=ppo_config.learning_rate) if args.sgd else None
-                             )
+                             data_collator=collator)
 
     score_shift = 0 if not ppo_config.normalize_scores else 0.5
     score_scale = 1 if not ppo_config.normalize_scores else 2
