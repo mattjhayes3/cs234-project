@@ -1,7 +1,8 @@
 import pandas as pd
 import random
 
-threshold = -0.3
+threshold = 0.25
+uniform = False
 
 random.seed(42)
 
@@ -14,14 +15,20 @@ print(df.columns)
 # flips = (df['diff'] < threshold) & (df.index < len(df)/1.5)
 # chosen = df.loc[flips, 'chosen']
 # rejected = df.loc[flips, 'rejected']
+quantile = df['diff'].quantile(threshold)
+
 count = 0
 for index, row in df.iterrows():
-    if random.random() < row['diff'] + threshold:
-    # if random.random() < threshold:
+    if uniform:
+        cond = random.random() < threshold
+    else: 
+        cond = row['diff'] < quantile
+    if cond:
+        print('flipping diff', row['diff'])
         count += 1
         chosen = row['chosen']
         rejected = row['rejected']
         df.loc[index, 'chosen'] = rejected
         df.loc[index, 'rejected'] = chosen
 print(f"Flipped {count}/{len(df)}")
-df.to_csv(f"{input[:-4]}_flipped_{str(threshold).replace('.', '_')}.csv")
+df.to_csv(f"{input[:-4]}_{'uniform' if uniform else 'quantile'}_flipped_{str(threshold).replace('.', '_')}.csv")

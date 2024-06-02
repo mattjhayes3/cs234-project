@@ -161,3 +161,7 @@ cython_debug/
 wandb/latest-run
 **/.DS_store
 wandb/latest-run/**
+*/cache-*.arrow
+**/cache-*.arrow
+**/cache-*.schema.json
+wandb/*
