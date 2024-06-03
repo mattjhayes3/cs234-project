@@ -206,7 +206,8 @@ def run(ppo_config, args, full_name):
 
             # Run PPO step
             stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
-            ppo_trainer.log_stats(stats, batch, rewards, columns_to_log=["query", "response", "ref_response", "ref_rewards"])
+            if not ppo_config.ac2:
+                ppo_trainer.log_stats(stats, batch, rewards, columns_to_log=["query", "response", "ref_response", "ref_rewards"])
 
         if not ppo_config.dry_run:
             model.save_pretrained(f"gpt2-imdb-pos-{full_name}", push_to_hub=True)
