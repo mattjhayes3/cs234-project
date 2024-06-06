@@ -210,8 +210,8 @@ def run(ppo_config, args, full_name):
                 ppo_trainer.log_stats(stats, batch, rewards, columns_to_log=["query", "response", "ref_response", "ref_rewards"])
 
         if not ppo_config.dry_run:
-            model.save_pretrained(f"gpt2-imdb-pos-{full_name}", push_to_hub=True)
-            tokenizer.save_pretrained(f"gpt2-imdb-pos-{full_name}", push_to_hub=True)
+            model.save_pretrained(f"models/gpt2-imdb-pos-{full_name}", push_to_hub=True)
+            tokenizer.save_pretrained(f"models/gpt2-imdb-pos-{full_name}", push_to_hub=True)
         print("Training done!  Start eval")
     print("eval batch size", ppo_trainer.config.batch_size)
     dataset = build_dataset(ppo_trainer.config, ppo_config.query_dataset, "test[:10%]")#[:512]
@@ -274,7 +274,8 @@ if __name__ == "__main__":
         full_name = ppo_config.eval_model
     else:
         full_name = f"{ppo_config.exp_name}-{ppo_config.start_time}"
-    toplevel = ",".join([full_name, ppo_config.beta, "epoch 1", *run(ppo_config, args, full_name)])
+    stat = [full_name, ppo_config.init_kl_coef, "epoch 1", *run(ppo_config, args, full_name)]
+    toplevel = ",".join([str(s) for s in stat])
     print(toplevel)
     with open('results/toplevel.csv', 'a') as f:
         f.write(toplevel + '\n')
