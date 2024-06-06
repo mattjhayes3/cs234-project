@@ -229,6 +229,8 @@ def run(ppo_config, args, full_name):
         )
         batch["response"] = tokenizer.batch_decode(response_tensors)
         batch["ref_response"] = tokenizer.batch_decode(ref_response_tensors)
+        batch['ref_length'] = [len(tokenizer.encode(r)) for r in batch['ref_response']]
+        batch['length'] = [len(tokenizer.encode(r)) for r in batch['response']]
 
         # Compute sentiment score
         texts = [q + r for q, r in zip(batch["query"], batch["response"])]
@@ -248,7 +250,7 @@ def run(ppo_config, args, full_name):
         # print(f"full kls shape", batch["full_kls"].shape)
         batch_df = pd.DataFrame(batch)
         # print(batch_df)
-        test_stats.append(batch_df[['query', 'response', 'rewards', 'ref_response', 'ref_rewards', 'full_kls', 'kls']])
+        test_stats.append(batch_df[['query', 'response', 'rewards', 'ref_response', 'ref_rewards', 'full_kls', 'kls', 'ref_length', 'length']])
 
 
     test_stats = pd.concat(test_stats, axis=0).reset_index(drop=True)
@@ -259,7 +261,7 @@ def run(ppo_config, args, full_name):
     print("median test reward", test_stats.rewards.median(), "from", test_stats.ref_rewards.median())
     print("mean KL", test_stats.kls.mean(), "+/-", test_stats.kls.sem(), "full", test_stats.full_kls.mean(), "+/-", test_stats.full_kls.sem())
     print("median KL", test_stats.kls.median(), "full", test_stats.full_kls.median())
-    return test_stats.rewards.mean(), test_stats.rewards.sem(), test_stats.full_kls.mean(), test_stats.full_kls.sem() 
+    return test_stats.rewards.mean(), test_stats.rewards.sem(), test_stats.full_kls.mean(), test_stats.full_kls.sem(), test_stats.length.mean()
 
 def eval(model, notes):
     return run(PPOConfig(exp_name="eval", eval_model=model), args=ScriptArguments(), full_name=f'{model}_{notes}')
@@ -272,5 +274,7 @@ if __name__ == "__main__":
         full_name = ppo_config.eval_model
     else:
         full_name = f"{ppo_config.exp_name}-{ppo_config.start_time}"
-    run(ppo_config, args, full_name)
-
+    toplevel = ",".join([full_name, ppo_config.beta, "epoch 1", *run(ppo_config, args, full_name)])
+    print(toplevel)
+    with open('results/toplevel.csv', 'a') as f:
+        f.write(toplevel + '\n')
