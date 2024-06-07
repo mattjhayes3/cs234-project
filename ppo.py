@@ -44,9 +44,14 @@ class ScriptArguments:
     lora_r: Optional[int] = field(default=16, metadata={"help": "the lora r parameter"})
 
 def run(ppo_config, args, full_name):
+    is_custom_reward = 'DownwardSpiral33' in ppo_config.reward_model
+    reward_index = 0 if is_custom_reward else 1
     # We then define the arguments to pass to the sentiment analysis pipeline.
     # We set `return_all_scores` to True to get the sentiment score for each token.
-    sent_kwargs = {"return_all_scores": True, "function_to_apply": "softmax", "batch_size": 32}
+    sent_kwargs = {"return_all_scores": True, "batch_size": 32}
+    if not is_custom_reward:
+        sent_kwargs.update({"function_to_apply": "softmax"})
+
 
     trl_model_class = AutoModelForCausalLMWithValueHead if not args.use_seq2seq else AutoModelForSeq2SeqLMWithValueHead
 
@@ -198,10 +203,11 @@ def run(ppo_config, args, full_name):
             # Compute sentiment score
             texts = [q + r for q, r in zip(batch["query"], batch["response"])]
             pipe_outputs = sentiment_pipe(texts, **sent_kwargs)
-            rewards = [(torch.tensor(output[1]["score"]) - score_shift) * score_scale for output in pipe_outputs]
+            print(pipe_outputs)
+            rewards = [(torch.tensor(output[reward_index]["score"]) - score_shift) * score_scale for output in pipe_outputs]
             ref_texts = [q + r for q, r in zip(batch["query"], batch["ref_response"])]
             ref_pipe_outputs = sentiment_pipe(ref_texts, **sent_kwargs)
-            ref_rewards = [(torch.tensor(output[1]["score"]) - score_shift) * score_scale for output in ref_pipe_outputs]
+            ref_rewards = [(torch.tensor(output[reward_index]["score"]) - score_shift) * score_scale for output in ref_pipe_outputs]
             batch["ref_rewards"] = ref_rewards
 
             # Run PPO step
@@ -235,11 +241,12 @@ def run(ppo_config, args, full_name):
         # Compute sentiment score
         texts = [q + r for q, r in zip(batch["query"], batch["response"])]
         pipe_outputs = sentiment_pipe(texts, **sent_kwargs)
-        rewards = [torch.tensor(output[1]["score"]) for output in pipe_outputs]
+        print(pipe_outputs)
+        rewards = [torch.tensor(output[reward_index]["score"]) for output in pipe_outputs]
         batch["rewards"] = rewards
         ref_texts = [q + r for q, r in zip(batch["query"], batch["ref_response"])]
         ref_pipe_outputs = sentiment_pipe(ref_texts, **sent_kwargs)
-        ref_rewards = [output[1]["score"] for output in ref_pipe_outputs]
+        ref_rewards = [output[reward_index]["score"] for output in ref_pipe_outputs]
         batch["ref_rewards"] = ref_rewards
 
         # Run PPO step
