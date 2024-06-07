@@ -219,6 +219,19 @@ def run(ppo_config, args, full_name):
             model.save_pretrained(f"models/gpt2-imdb-pos-{full_name}", push_to_hub=True)
             tokenizer.save_pretrained(f"models/gpt2-imdb-pos-{full_name}", push_to_hub=True)
         print("Training done!  Start eval")
+
+
+    print("Load eval reward model sentiment-analysis:siebert/sentiment-roberta-large-english")
+    sentiment_pipe = pipeline(task, model='sentiment-analysis:siebert/sentiment-roberta-large-english', device=device)
+
+    # Some tokenizers like GPT-2's don't have a padding token by default, so we set one here.
+    if sentiment_pipe.tokenizer.pad_token_id is None:
+        sentiment_pipe.tokenizer.pad_token_id = tokenizer.pad_token_id
+
+    if sentiment_pipe.model.config.pad_token_id is None:
+        sentiment_pipe.model.config.pad_token_id = tokenizer.pad_token_id
+    sent_kwargs = {"return_all_scores": True, "batch_size": 32, "function_to_apply": "softmax"}
+
     print("eval batch size", ppo_trainer.config.batch_size)
     dataset = build_dataset(ppo_trainer.config, ppo_config.query_dataset, "test[:10%]")#[:512]
     dataloader = ppo_trainer.prepare_dataloader(dataset, collator)
@@ -242,11 +255,11 @@ def run(ppo_config, args, full_name):
         texts = [q + r for q, r in zip(batch["query"], batch["response"])]
         pipe_outputs = sentiment_pipe(texts, **sent_kwargs)
         # print(pipe_outputs)
-        rewards = [torch.tensor(output[reward_index]["score"]) for output in pipe_outputs]
+        rewards = [torch.tensor(output[1]["score"]) for output in pipe_outputs]
         batch["rewards"] = rewards
         ref_texts = [q + r for q, r in zip(batch["query"], batch["ref_response"])]
         ref_pipe_outputs = sentiment_pipe(ref_texts, **sent_kwargs)
-        ref_rewards = [output[reward_index]["score"] for output in ref_pipe_outputs]
+        ref_rewards = [output[1]["score"] for output in ref_pipe_outputs]
         batch["ref_rewards"] = ref_rewards
 
         # Run PPO step
