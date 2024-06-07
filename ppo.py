@@ -203,7 +203,7 @@ def run(ppo_config, args, full_name):
             # Compute sentiment score
             texts = [q + r for q, r in zip(batch["query"], batch["response"])]
             pipe_outputs = sentiment_pipe(texts, **sent_kwargs)
-            print(pipe_outputs)
+            # print(pipe_outputs)
             rewards = [(torch.tensor(output[reward_index]["score"]) - score_shift) * score_scale for output in pipe_outputs]
             ref_texts = [q + r for q, r in zip(batch["query"], batch["ref_response"])]
             ref_pipe_outputs = sentiment_pipe(ref_texts, **sent_kwargs)
@@ -241,7 +241,7 @@ def run(ppo_config, args, full_name):
         # Compute sentiment score
         texts = [q + r for q, r in zip(batch["query"], batch["response"])]
         pipe_outputs = sentiment_pipe(texts, **sent_kwargs)
-        print(pipe_outputs)
+        # print(pipe_outputs)
         rewards = [torch.tensor(output[reward_index]["score"]) for output in pipe_outputs]
         batch["rewards"] = rewards
         ref_texts = [q + r for q, r in zip(batch["query"], batch["ref_response"])]
