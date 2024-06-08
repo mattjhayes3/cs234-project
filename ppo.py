@@ -20,7 +20,7 @@ from typing import Optional
 
 import torch
 from accelerate import Accelerator
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 from peft import LoraConfig
 from tqdm import tqdm
 from transformers import AutoTokenizer, HfArgumentParser, pipeline
@@ -42,6 +42,7 @@ class ScriptArguments:
     use_peft: bool = field(default=False, metadata={"help": "whether to use peft"})
     lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
     lora_r: Optional[int] = field(default=16, metadata={"help": "the lora r parameter"})
+    concat: bool = field(default=False, metadata={"help": "whether concat extra train prefixes"})
 
 def run(ppo_config, args, full_name):
     is_custom_reward = 'DownwardSpiral33' in ppo_config.reward_model
@@ -93,7 +94,10 @@ def run(ppo_config, args, full_name):
 
     # We retrieve the dataloader by calling the `build_dataset` function.
     dataset = build_dataset(ppo_config, ppo_config.query_dataset, "train" if not ppo_config.eval_model else "train[:1%]")
-
+    if args.concat:
+        # While it's the test split, we only use the first 10% below, should have used unlabeled then split but want consistency with earlier results
+        dataset = concatenate_datasets([dataset, build_dataset(ppo_config, ppo_config.query_dataset, 'test[10%:]')])
+        print("concated dataset len", len(dataset))
 
     def collator(data):
         return {key: [d[key] for d in data] for key in data[0]}
