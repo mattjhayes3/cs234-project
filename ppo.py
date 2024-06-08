@@ -222,7 +222,7 @@ def run(ppo_config, args, full_name):
 
 
     print("Load eval reward model sentiment-analysis:siebert/sentiment-roberta-large-english")
-    sentiment_pipe = pipeline(task, model='sentiment-analysis:siebert/sentiment-roberta-large-english', device=device)
+    sentiment_pipe = pipeline('sentiment-analysis', model='siebert/sentiment-roberta-large-english', device=device)
 
     # Some tokenizers like GPT-2's don't have a padding token by default, so we set one here.
     if sentiment_pipe.tokenizer.pad_token_id is None:
