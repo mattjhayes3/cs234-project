@@ -20,7 +20,7 @@ from typing import Optional
 
 import torch
 from accelerate import Accelerator
-from datasets import load_dataset, concatenate_datasets
+from datasets import load_dataset, concatenate_datasets, Dataset
 from peft import LoraConfig
 from tqdm import tqdm
 from transformers import AutoTokenizer, HfArgumentParser, pipeline
@@ -92,12 +92,23 @@ def run(ppo_config, args, full_name):
         return ds
 
 
-    # We retrieve the dataloader by calling the `build_dataset` function.
-    dataset = build_dataset(ppo_config, ppo_config.query_dataset, "train" if not ppo_config.eval_model else "train[:1%]")
-    if args.concat:
-        # While it's the test split, we only use the first 10% below, should have used unlabeled then split but want consistency with earlier results
-        dataset = concatenate_datasets([dataset, build_dataset(ppo_config, ppo_config.query_dataset, 'test[10%:]')])
-        print("concated dataset len", len(dataset))
+    if ppo_config.query_dataset == 'imdb':
+        # We retrieve the dataloader by calling the `build_dataset` function.
+        dataset = build_dataset(ppo_config, ppo_config.query_dataset, "train" if not ppo_config.eval_model else "train[:1%]")
+        if args.concat:
+            # While it's the test split, we only use the first 10% below, should have used unlabeled then split but want consistency with earlier results
+            dataset = concatenate_datasets([dataset, build_dataset(ppo_config, ppo_config.query_dataset, 'test[10%:]')])
+            print("concated dataset len", len(dataset))
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(ppo_config.model_name)
+        tokenizer.pad_token = tokenizer.eos_token
+        def tokenize(sample):
+            sample['query'] = sample['prompt']
+            sample['input_ids'] = tokenizer.encode(sample['prompt'])
+            return sample
+        dataset = Dataset.from_csv(ppo_config.query_dataset).map(tokenize, batched=False)
+        dataset.set_format(type='torch')
+        print("custom train dataset len", len(dataset))
 
     def collator(data):
         return {key: [d[key] for d in data] for key in data[0]}
@@ -258,7 +269,6 @@ def run(ppo_config, args, full_name):
         # Compute sentiment score
         texts = [q + r for q, r in zip(batch["query"], batch["response"])]
         pipe_outputs = sentiment_pipe(texts, **sent_kwargs)
-        # print(pipe_outputs)
         rewards = [torch.tensor(output[1]["score"]) for output in pipe_outputs]
         batch["rewards"] = rewards
         ref_texts = [q + r for q, r in zip(batch["query"], batch["ref_response"])]
@@ -266,14 +276,10 @@ def run(ppo_config, args, full_name):
         ref_rewards = [output[1]["score"] for output in ref_pipe_outputs]
         batch["ref_rewards"] = ref_rewards
 
-        # Run PPO step
         batch["full_kls"] = ppo_trainer.get_generation_kls("full", query_tensors, response_tensors, rewards).sum(dim=-1).cpu().tolist()
         batch["kls"] = ppo_trainer.get_generation_kls("kl", query_tensors, response_tensors, rewards).sum(dim=-1).cpu().tolist()
         batch["rewards"] = [reward.item() for reward in batch["rewards"]]
-        # print(f"kls shape", batch["kls"].shape)
-        # print(f"full kls shape", batch["full_kls"].shape)
         batch_df = pd.DataFrame(batch)
-        # print(batch_df)
         test_stats.append(batch_df[['query', 'response', 'rewards', 'ref_response', 'ref_rewards', 'full_kls', 'kls', 'ref_length', 'length']])
 
 

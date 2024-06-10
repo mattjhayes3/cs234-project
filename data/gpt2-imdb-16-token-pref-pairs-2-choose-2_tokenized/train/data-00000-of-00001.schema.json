@@ -1,0 +1,194 @@
+{
+  "fields": [
+    {
+      "name": "Unnamed: 0",
+      "type": {
+        "isSigned": true,
+        "bitWidth": 64
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "prompt",
+      "type": {},
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "chosen",
+      "type": {},
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "rejected",
+      "type": {},
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "diff",
+      "type": {
+        "precision": 2
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "source_index",
+      "type": {
+        "isSigned": true,
+        "bitWidth": 64
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "chosen_input_ids",
+      "type": {
+        "children": [
+          {
+            "name": "item",
+            "type": {
+              "isSigned": true,
+              "bitWidth": 64
+            },
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "chosen_attention_mask",
+      "type": {
+        "children": [
+          {
+            "name": "item",
+            "type": {
+              "isSigned": true,
+              "bitWidth": 64
+            },
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "chosen_labels",
+      "type": {
+        "children": [
+          {
+            "name": "item",
+            "type": {
+              "isSigned": true,
+              "bitWidth": 64
+            },
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "rejected_input_ids",
+      "type": {
+        "children": [
+          {
+            "name": "item",
+            "type": {
+              "isSigned": true,
+              "bitWidth": 64
+            },
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "rejected_attention_mask",
+      "type": {
+        "children": [
+          {
+            "name": "item",
+            "type": {
+              "isSigned": true,
+              "bitWidth": 64
+            },
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "rejected_labels",
+      "type": {
+        "children": [
+          {
+            "name": "item",
+            "type": {
+              "isSigned": true,
+              "bitWidth": 64
+            },
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "prompt_input_ids",
+      "type": {
+        "children": [
+          {
+            "name": "item",
+            "type": {
+              "isSigned": true,
+              "bitWidth": 64
+            },
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "prompt_attention_mask",
+      "type": {
+        "children": [
+          {
+            "name": "item",
+            "type": {
+              "isSigned": true,
+              "bitWidth": 64
+            },
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    }
+  ],
+  "metadata": {},
+  "dictionaries": {}
+}
