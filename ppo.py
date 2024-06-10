@@ -248,7 +248,7 @@ def run(ppo_config, args, full_name):
     sent_kwargs = {"return_all_scores": True, "batch_size": 32, "function_to_apply": "softmax"}
 
     print("eval batch size", ppo_trainer.config.batch_size)
-    dataset = build_dataset(ppo_trainer.config, ppo_config.query_dataset, "test[:10%]")#[:512]
+    dataset = build_dataset(ppo_trainer.config, 'imdb', "test[:10%]")#[:512]
     dataloader = ppo_trainer.prepare_dataloader(dataset, collator)
     print("test len", len(dataloader))
     test_stats = []
